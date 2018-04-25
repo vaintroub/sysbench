@@ -39,16 +39,13 @@
 #include "db_driver.h"
 
 /* Check MySQL version for prepared statements availability */
-#if MYSQL_VERSION_ID >= 40103
+
 # define HAVE_PS
-#endif
 
 /* Check if we should use the TYPE= (for 3.23) or ENGINE= syntax */
-#if MYSQL_VERSION_ID >= 40000
+
 # define ENGINE_CLAUSE "ENGINE"
-#else
-# define ENGINE_CLAUSE "TYPE"
-#endif
+#
 
 #define DEBUG(format, ...) do { if (db_globals.debug) log_text(LOG_DEBUG, format, __VA_ARGS__); } while (0)
 
@@ -414,7 +411,11 @@ int mysql_drv_connect(db_conn_t *sb_conn)
           ssl_cert, ssl_ca);
     mysql_ssl_set(con, ssl_key, ssl_cert, ssl_ca, NULL, NULL);
   }
-  
+#ifdef _WIN32
+  if (args.socket != NULL) {
+	  mysql_options(con, MYSQL_OPT_NAMED_PIPE, NULL);
+  }
+#endif
   DEBUG("mysql_real_connect(%p, \"%s\", \"%s\", \"%s\", \"%s\", %u, \"%s\", %s)",
         con,
         host,
@@ -423,7 +424,7 @@ int mysql_drv_connect(db_conn_t *sb_conn)
         args.db,
         args.port,
         args.socket,
-        (MYSQL_VERSION_ID >= 50000) ? "CLIENT_MULTI_STATEMENTS" : "0"
+        "CLIENT_MULTI_STATEMENTS"
         );
   if (!mysql_real_connect(con,
                          host,
@@ -432,11 +433,7 @@ int mysql_drv_connect(db_conn_t *sb_conn)
                          args.db,
                          args.port,
                          args.socket,
-#if MYSQL_VERSION_ID >= 50000
                           CLIENT_MULTI_STATEMENTS)
-#else
-                          0)
-#endif
       )
   {
     log_text(LOG_FATAL, "unable to connect to MySQL server, aborting...");
