@@ -35,8 +35,10 @@
 #include "sb_logger.h"
 #include "sb_rand.h"
 
+#ifndef _WIN32
 #include "sb_ck_pr.h"
 #include "ck_cc.h"
+#endif
 
 #include "sb_util.h"
 
@@ -48,7 +50,7 @@
 #define SB_HISTOGRAM_NSLOTS 128
 
 /* Global latency histogram */
-sb_histogram_t sb_latency_histogram CK_CC_CACHELINE;
+CK_CC_CACHELINE sb_histogram_t sb_latency_histogram;
 
 
 int sb_histogram_init(sb_histogram_t *h, size_t size,
@@ -103,7 +105,7 @@ void sb_histogram_update(sb_histogram_t *h, double value)
 
   slot = sb_rand_uniform_uint64() % SB_HISTOGRAM_NSLOTS;
 
-  i = floor((log(value) - h->range_deduct) * h->range_mult + 0.5);
+  i = (ssize_t)floor((log(value) - h->range_deduct) * h->range_mult + 0.5);
   if (SB_UNLIKELY(i < 0))
     i = 0;
   else if (SB_UNLIKELY(i >= (ssize_t) (h->array_size)))
@@ -161,7 +163,7 @@ double sb_histogram_get_pct_intermediate(sb_histogram_t *h,
     number of events in it, calculate the current, intermediate percentile value
     to return.
   */
-  nmax = floor(nevents * percentile / 100 + 0.5);
+  nmax = (uint64_t)floor(nevents * percentile / 100 + 0.5);
 
   ncur = 0;
   for (i = 0; i < size; i++)
@@ -224,7 +226,7 @@ static double get_pct_cumulative(sb_histogram_t *h, double percentile)
   size_t   i;
   uint64_t ncur, nmax;
 
-  nmax = floor(h->cumulative_nevents * percentile / 100 + 0.5);
+  nmax = (uint64_t)floor(h->cumulative_nevents * percentile / 100 + 0.5);
 
   ncur = 0;
   for (i = 0; i < h->array_size; i++)
@@ -318,7 +320,7 @@ void sb_histogram_print(sb_histogram_t *h)
     if (array[i] == 0)
       continue;
 
-    width = floor(array[i] * (double) 40 / maxcnt + 0.5);
+    width = (int)floor(array[i] * (double) 40 / maxcnt + 0.5);
 
     printf("%12.3f |%-40.*s %lu\n",
            exp(i / h->range_mult + h->range_deduct),          /* value */

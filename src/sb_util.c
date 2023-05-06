@@ -50,19 +50,34 @@ void *sb_memalign(size_t size, size_t alignment)
 #elif defined(HAVE_VALLOC)
   /* Allocate on page boundary */
   (void) alignment; /* unused */
-  buffer = valloc(size);
+  buf = valloc(size);
+#elif defined(_MSC_VER)
+  buf = _aligned_malloc(size, alignment);
 #else
 # error Cannot find an aligned allocation library function!
 #endif
 
   return buf;
 }
+/* Free memory allocated with sb_memalign() */
+void sb_aligned_free(void* p)
+{
+#if defined(_MSC_VER)
+  _aligned_free(p);
+#else
+  free(p);
+#endif
+}
 
 /* Get OS page size */
 
 size_t sb_getpagesize(void)
 {
-#ifdef _SC_PAGESIZE
+#ifdef _WIN32
+  SYSTEM_INFO si;
+  GetSystemInfo(&si);
+  return si.dwPageSize;
+#elif defined _SC_PAGESIZE
   return sysconf(_SC_PAGESIZE);
 #else
   return getpagesize();

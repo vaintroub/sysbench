@@ -61,7 +61,7 @@
 
 #ifndef SB_CK_H
 #define SB_CK_H
-
+#ifndef _WIN32
 #include "ck_pr.h"
 
 #if !defined(CK_F_PR_LOAD_64)
@@ -233,4 +233,5 @@ CK_PR_FAS_S(64, uint64_t)
 #undef CK_PR_FAS
 
 #endif /* !CK_F_PR_LOAD_64*/
+#endif /* WIN32 */
 #endif /* SB_CK_H */

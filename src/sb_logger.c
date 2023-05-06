@@ -37,7 +37,9 @@
 #include "sb_logger.h"
 #include "sb_histogram.h"
 
+#ifndef _WIN32
 #include "ck_cc.h"
+#endif
 
 #define TEXT_BUFFER_SIZE 4096
 #define ERROR_BUFFER_SIZE 256

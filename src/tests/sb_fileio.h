@@ -18,7 +18,9 @@
 
 #ifndef SB_FILEIO_H
 #define SB_FILEIO_H
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 /* File operation types */
 typedef enum
 {

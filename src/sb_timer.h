@@ -23,6 +23,9 @@
 # include "config.h"
 #endif
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #ifdef TIME_WITH_SYS_TIME
 # include <sys/time.h>
 # include <time.h>
@@ -38,7 +41,9 @@
 #include <stdbool.h>
 
 #include "sb_util.h"
+#ifndef _WIN32
 #include "ck_spinlock.h"
+#endif
 
 #define NS_PER_SEC 1000000000
 #define US_PER_SEC 1000000
@@ -62,7 +67,28 @@
 			    (a.tv_nsec - b.tv_nsec))
 
 /* Wrapper over various *gettime* functions */
-#ifdef HAVE_CLOCK_GETTIME
+#ifdef _WIN32
+#include <windows.h>
+static int clock_gettime_monotonic(struct timespec* tv)
+{
+  static long long freq;
+  if (!freq)
+  {
+    QueryPerformanceFrequency((LARGE_INTEGER *)&freq);
+    if (!freq)
+      return -1;
+  }
+  long long now;
+  QueryPerformanceCounter((LARGE_INTEGER *)&now);
+  tv->tv_sec  = (time_t)(now/freq);
+  tv->tv_nsec = (long)((now % freq) * 1000000000LL / freq);
+  return 0;
+}
+#endif
+
+#if defined _WIN32
+# define SB_GETTIME(tsp) clock_gettime_monotonic(tsp)
+#elif defined HAVE_CLOCK_GETTIME
 # define SB_GETTIME(tsp) clock_gettime(CLOCK_MONOTONIC, tsp)
 #else
 # define SB_GETTIME(tsp)                        \
@@ -98,9 +124,19 @@ typedef struct
 
 static inline int sb_nanosleep(uint64_t ns)
 {
+#ifdef _WIN32
+  pthread_testcancel();
+  Sleep((DWORD)(ns / NS_PER_MS));
+  return 0;
+#else
   struct timespec ts = { ns / NS_PER_SEC, ns % NS_PER_SEC };
   return nanosleep(&ts, NULL);
+#endif
 }
+
+#ifdef _WIN32
+#define usleep(x) sb_nanosleep(1000ULL*(x))
+#endif
 
 /* timer control functions */
 

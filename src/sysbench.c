@@ -74,8 +74,43 @@
 #include "sb_thread.h"
 #include "sb_barrier.h"
 
+#ifdef _WIN32
+#define HAVE_ALARM
+#include <stdio.h>
+#include <windows.h>
+#include <signal.h>
+#define SIGALRM 14
+static HANDLE timer_handle;
+static void (*alarm_func)(int);
+volatile int alarm_triggered = 0;
+static void CALLBACK timer_func(void *param, BOOLEAN fired)
+{
+  (void)param;
+  (void)fired;
+  alarm_func(SIGALRM);
+}
+
+static unsigned int alarm(unsigned int seconds)
+{
+  if (timer_handle)
+  {
+    (void)DeleteTimerQueueTimer(NULL, timer_handle, INVALID_HANDLE_VALUE);
+    timer_handle = NULL;
+  }
+  if (seconds == 0)
+    return 0;
+
+  if (!CreateTimerQueueTimer(&timer_handle, NULL, timer_func, NULL, seconds*1000, 0, WT_EXECUTEONLYONCE))
+    return 0;
+
+  return -1;
+}
+#define signal(x, y) do {alarm_func = y;} while(0);
+
+#else
 #include "ck_cc.h"
 #include "ck_ring.h"
+#endif
 
 #define VERSION_STRING PACKAGE" "PACKAGE_VERSION SB_GIT_SHA
 
@@ -142,11 +177,11 @@ static sb_barrier_t report_barrier;
 /* structures to handle queue of events, needed for tx_rate mode */
 static pthread_mutex_t    queue_mutex;
 static pthread_cond_t     queue_cond;
-static uint64_t           queue_array[MAX_QUEUE_LEN] CK_CC_CACHELINE;
-static ck_ring_buffer_t   queue_ring_buffer[MAX_QUEUE_LEN] CK_CC_CACHELINE;
-static ck_ring_t          queue_ring CK_CC_CACHELINE;
+static CK_CC_CACHELINE uint64_t queue_array[MAX_QUEUE_LEN];
+static CK_CC_CACHELINE ck_ring_buffer_t   queue_ring_buffer[MAX_QUEUE_LEN];
+static CK_CC_CACHELINE ck_ring_t          queue_ring ;
 
-static int report_thread_created CK_CC_CACHELINE;
+static CK_CC_CACHELINE int report_thread_created;
 static int checkpoints_thread_created;
 static int eventgen_thread_created;
 
@@ -157,11 +192,11 @@ static sb_timer_t *timers;
 static sb_timer_t *timers_copy;
 
 /* Global execution timer */
-sb_timer_t      sb_exec_timer CK_CC_CACHELINE;
+CK_CC_CACHELINE sb_timer_t      sb_exec_timer;
 
 /* timers for intermediate/checkpoint reports */
-sb_timer_t sb_intermediate_timer CK_CC_CACHELINE;
-sb_timer_t sb_checkpoint_timer   CK_CC_CACHELINE;
+CK_CC_CACHELINE sb_timer_t sb_intermediate_timer;
+CK_CC_CACHELINE sb_timer_t sb_checkpoint_timer;
 
 TLS int sb_tls_thread_id;
 
@@ -176,11 +211,13 @@ static void sigalrm_thread_init_timeout_handler(int sig)
     return;
 
   log_text(LOG_FATAL,
-           "Worker threads failed to initialize within %u seconds!",
-           thread_init_timeout);
+    "Worker threads failed to initialize within %u seconds!",
+    thread_init_timeout);
 
   exit(2);
 }
+#endif
+
 
 /* Default intermediate reports handler */
 
@@ -413,7 +450,7 @@ static void report_cumulative(void)
     sb_report_cumulative(&stat);
 }
 
-
+#ifdef HAVE_ALARM
 static void sigalrm_forced_shutdown_handler(int sig)
 {
   if (sig != SIGALRM)
@@ -426,7 +463,7 @@ static void sigalrm_forced_shutdown_handler(int sig)
   sb_timer_stop(&sb_checkpoint_timer);
 
   log_text(LOG_FATAL,
-           "The --max-time limit has expired, forcing shutdown...");
+    "The --max-time limit has expired, forcing shutdown...");
 
   report_cumulative();
 
@@ -672,7 +709,7 @@ void print_run_mode(sb_test_t *test)
   {
     log_text(LOG_NOTICE,
              "Initializing random number generator from current time\n");
-    srandom(time(NULL));
+    srandom((unsigned int)time(NULL));
   }
 
   if (sb_globals.force_shutdown)
@@ -887,13 +924,13 @@ static void *eventgen_thread_proc(void *arg)
   const double lambda = 1e9 / sb_globals.tx_rate;
 
   uint64_t curr_ns = sb_timer_value(&sb_exec_timer);
-  uint64_t intr_ns = sb_rand_exp(lambda);
+  uint64_t intr_ns = (uint64_t)sb_rand_exp(lambda);
   uint64_t next_ns = curr_ns + intr_ns;
 
   for (int i = 0; ; i = (i+1) % MAX_QUEUE_LEN)
   {
     curr_ns = sb_timer_value(&sb_exec_timer);
-    intr_ns = sb_rand_exp(lambda);
+    intr_ns = (uint64_t)sb_rand_exp(lambda);
     next_ns += intr_ns;
 
     if (sb_globals.max_time_ns > 0 &&
@@ -1172,7 +1209,7 @@ static int run_test(sb_test_t *test)
     /* Set the alarm to force shutdown */
     signal(SIGALRM, sigalrm_forced_shutdown_handler);
 
-    alarm(NS2SEC(sb_globals.max_time_ns) + sb_globals.timeout);
+    alarm((unsigned int)NS2SEC(sb_globals.max_time_ns) + sb_globals.timeout);
   }
 #endif
 
@@ -1340,7 +1377,7 @@ static int init(void)
     if (tmp == NULL)
     {
       sb_globals.force_shutdown = 1;
-      sb_globals.timeout = NS2SEC(sb_globals.max_time_ns) / 20;
+      sb_globals.timeout = (unsigned int)NS2SEC(sb_globals.max_time_ns) / 20;
     }
     else if (strcasecmp(tmp, "off"))
     {
@@ -1598,8 +1635,8 @@ end:
 
   sb_thread_done();
 
-  free(timers);
-  free(timers_copy);
+  sb_aligned_free(timers);
+  sb_aligned_free(timers_copy);
 
   free(sb_globals.argv);
 
