@@ -197,7 +197,7 @@ set_allowed_string_values(WITH_PGSQL "auto;ON;OFF")
 
 if (WITH_PGSQL)
   # workaround CMake issue # 17223 (non-essential header lookup)
-  set(PostgreSQL_TYPE_INCLUDE_DIR /usr/include)
+  set(PostgreSQL_TYPE_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
   find_package(PostgreSQL)
   if (PostgreSQL_FOUND)
     target_sources(sysbench PRIVATE drivers/pgsql/drv_pgsql.c)
@@ -309,12 +309,15 @@ install(DIRECTORY
 if (${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR})
   # make test is broken on out-of-source
   add_custom_target(test
-    COMMAND ./test_run.sh
+    COMMAND sh -c ./test_run.sh
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/tests)
 endif()
 endif()
 
 if(WIN32)
+  # for timerGetPeriod
+  target_link_libraries(sysbench PRIVATE winmm)
+
   if(TARGET MySQL::MySQL)
     set(mysqlclientlib  MySQL::MySQL)
   elseif(TARGET mariadbclient)
@@ -331,7 +334,8 @@ if(WIN32)
     $<TARGET_FILE_DIR:sysbench>
     $<TARGET_FILE_DIR:luajit::libluajit>
     $<$<BOOL:${mysqlclientlib}>:$<TARGET_FILE_DIR:${mysqlclientlib}>>
-    $<$<BOOL:${USE_PGSQL}>:$<TARGET_FILE_DIR:PostgreSQL::PostgreSQL>>
+    ${PostgreSQL_LIBRARY_DIRS}
+    $<$<BOOL:${PostgreSQL_LIBRARY_DIR}>:${PostgreSQL_LIBRARY_DIR}/../bin>
   )
 else()
   install(TARGETS sysbench

@@ -59,7 +59,9 @@ if (_MySQL_use_pkgconfig)
   endif ()
   unset(_mysql_target)
   unset(_MySQL_use_pkgconfig)
-  return()
+  if (TARGET MySQL::MySQL)
+    return()
+  endif()
 endif()
 
 
