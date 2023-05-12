@@ -1,0 +1,128 @@
+environment:
+  matrix:
+    - job_name: Windows
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+
+    - job_name: Linux
+      APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu2004
+
+    - job_name: macOS
+      APPVEYOR_BUILD_WORKER_IMAGE: macos-monterey
+
+matrix:
+  fast_finish: true
+
+for:
+
+# ======================================
+#      Windows
+# ======================================
+
+-
+  matrix:
+    only:
+    - job_name: Windows
+
+  services:
+  - mysql
+  - postgresql13
+
+
+  build_script:
+  - mkdir build
+  - cd build
+  - cmake ..
+  - cmake --build . -j%NUMBER_OF_PROCESSORS% --verbose --config RelWithDebInfo --target package
+  - cmake --install . --config RelWithDebInfo --prefix install
+
+  test_script:
+  - echo %CD%
+  - set MYSQL_PWD=Password12!
+  - set PATH=%CD%\install\bin;C:\Program Files\MySQL\MySQL Server 5.7\bin;;%PATH%
+  - set SBTEST_MYSQL_ARGS=--mysql-user=root --mysql-password=%MYSQL_PWD%
+  - mysql -uroot --password=%MYSQL_PWD% -e "show variables"
+  - mysql -uroot --password=%MYSQL_PWD% -e "create database sbtest"
+  - sysbench --help
+  - set SBTEST_MYSQL_ARGS=--mysql-user=root --mysql-password=%MYSQL_PWD%
+  - sysbench oltp_read_only %SBTEST_MYSQL_ARGS% --tables=10 --table-size=10 prepare
+  - sysbench oltp_read_only %SBTEST_MYSQL_ARGS% --tables=10 --table-size=10 --threads=2 --report-interval=2 --time=30 run
+  - sysbench oltp_read_only %SBTEST_MYSQL_ARGS% --tables=10 cleanup
+  - sysbench oltp_read_only %SBTEST_MYSQL_ARGS%  prepare
+  - sysbench oltp_read_only %SBTEST_MYSQL_ARGS% --threads=4 --report-interval=2 --time=30 run
+  - sysbench oltp_read_only %SBTEST_MYSQL_ARGS% cleanup
+  - sysbench oltp_point_select %SBTEST_MYSQL_ARGS% --threads=2 prepare
+  - sysbench oltp_point_select %SBTEST_MYSQL_ARGS% --threads=2 --report-interval=2 --time=30 --histogram=on run
+  - sysbench oltp_point_select %SBTEST_MYSQL_ARGS%  cleanup
+
+  - set PGUSER=postgres
+  - set PGPASSWORD=Password12!
+  - set PATH=C:\Program Files\PostgreSQL\13\bin\;%PATH%
+  - createdb sbtest
+  - set SBTEST_PGSQL_ARGS=--db-driver=pgsql --pgsql-user=%PGUSER% --pgsql-password=%PGPASSWORD% --pgsql-sslmode=disable
+  - sysbench oltp_read_only %SBTEST_PGSQL_ARGS%  prepare
+  # pgsql occasionally fails with more than 1 thread (exits with return code 3, which is likely, an abort()),
+  # which seems to be a bug in the driver on Windows
+  - sysbench oltp_read_only %SBTEST_PGSQL_ARGS% --report-interval=2 --time=30 --threads=1 run
+  - sysbench oltp_read_only %SBTEST_PGSQL_ARGS% cleanup
+
+  - sysbench cpu --report-interval=2 --threads=2 run
+  - sysbench threads --report-interval=2 --threads=2 run
+  - sysbench memory --report-interval=2 --threads=2 run
+  - sysbench fileio --file-test-mode=rndrd --report-interval=2 --threads=2 prepare
+  - sysbench fileio --file-test-mode=rndrd --report-interval=2 --threads=2 run
+  - sysbench fileio --file-test-mode=rndrd --report-interval=2 --threads=2 cleanup
+
+# ======================================
+#      Linux
+# ======================================
+
+-
+  matrix:
+    only:
+    - job_name: Linux
+
+  services:
+  - mysql
+  - postgresql
+  install:
+  - sudo apt-get update
+  - sudo apt -y install libmysqlclient-dev
+  - sudo apt -y install libpq-dev
+  build_script:
+  - cmake -GNinja . -DCMAKE_BUILD_TYPE=Release
+  - cmake --build .
+  test_script:
+  - cmake --build . --target test
+  - export MYSQL_PWD=Password12!
+  - mysql -uroot -e "create database sbtest"
+  - export SBTEST_MYSQL_ARGS="--mysql-user=root --mysql-password=Password12! --mysql-host=127.0.0.1"
+  - ./src/sysbench oltp_read_only $SBTEST_MYSQL_ARGS --tables=10 --table-size=1000 prepare
+  - ./src/sysbench oltp_read_only $SBTEST_MYSQL_ARGS --tables=10 --table-size=1000 --threads=2 --report-interval=2 --time=30 run
+  - ./src/sysbench oltp_read_only $SBTEST_MYSQL_ARGS --tables=10 cleanup
+  - createdb sbtest
+  - export SBTEST_PGSQL_ARGS="--db-driver=pgsql --pgsql-user=postgres --pgsql-password=Password12! --pgsql-sslmode=disable"
+  - ./src/sysbench oltp_read_only $SBTEST_PGSQL_ARGS --tables=10 --table-size=1000 prepare
+  - ./src/sysbench oltp_read_only $SBTEST_PGSQL_ARGS --tables=10 --table-size=1000 --threads=2 --report-interval=2 --time=30 run
+  - ./src/sysbench oltp_read_only $SBTEST_PGSQL_ARGS --tables=10 cleanup
+
+# ======================================
+#      macOS
+# ======================================
+
+-
+  matrix:
+    only:
+    - job_name: macOS
+
+  install:
+  - HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq
+  - brew link --force mysql-client libpq
+
+  build_script:
+  - cmake . -G"Unix Makefiles" -DCMAKE_BUILD_TYPE=RelWithDebInfo
+  - make package
+  - cmake --install . --config RelWithDebInfo --prefix install
+
+  test_script:
+  - make test
+  - ./install/bin/sysbench cpu run --report-interval=1
