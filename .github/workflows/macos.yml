@@ -33,7 +33,9 @@ jobs:
       - name: test_install
         run: cmake --install build_dir --prefix install_dir --config RelWithDebInfo
       - name: set PATH
-        run: export PATH=$(PWD)/install_dir/bin:$PATH
+        run: |
+          export PATH=$PWD/install_dir/bin:$PATH
+          echo $PWD
       - name: which sysbench
         run: which sysbench
       - name: sysbench version
