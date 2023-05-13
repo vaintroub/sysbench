@@ -14,7 +14,7 @@ jobs:
         with:
           mysql-version: 'mariadb-10.9'
       - name: MySQL info
-        run:  echo ${{ steps.setup-mysql.outputs.base-dir }}
+        run:  echo "${{ steps.setup-mysql.outputs.base-dir }}"
       - name: checkout
         uses: actions/checkout@v3
       - name: configure
@@ -25,4 +25,5 @@ jobs:
         run: cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
       - name: sysbench version
         run: .\install_dir\bin\sysbench.exe --version
-     
+      - name: create database sbtest
+        run: mysql -uroot -e "create database sbtest"
