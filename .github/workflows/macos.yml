@@ -31,10 +31,9 @@ jobs:
       - name: build
         run: cmake --build build_dir --config RelWithDebInfo -j4
       - name: test_install
-        run: cmake --install build_dir --prefix install_dir --config RelWithDebInfo
-      - name: set PATH
         run: |
-          echo "$GITHUB_WORKSPACE/install_dir/bin >> $GITHUB_PATH
+          cmake --install build_dir --prefix install_dir --config RelWithDebInfo
+          echo "$GITHUB_WORKSPACE/install_dir/bin" >> $GITHUB_PATH
       - name: which sysbench
         run: which sysbench
       - name: sysbench version
