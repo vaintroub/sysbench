@@ -18,7 +18,7 @@ jobs:
             innodb_buffer_pool_size=512MB
             max_allowed_packet=16MB
             max_connections=500
-            loose-enable-named-pipe=1
+            named-pipe=1
       - name: checkout
         uses: actions/checkout@v3
       - name: configure
@@ -30,7 +30,7 @@ jobs:
       - name: sysbench version
         run: .\install_dir\bin\sysbench.exe --version
       - name: show variables
-        run: mysql -uroot -e "show variables like '%dir%'"
+        run: mysql -uroot -e "show variables"
       - name: create database sbtest
         run: mysql -uroot -e "create database sbtest"
       - name: sysbench oltp_read_write prepare
