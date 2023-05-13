@@ -9,6 +9,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Build on ${{ matrix.os }}
     steps:
+      - name: actions-setup-mysql
+        uses: shogo82148/actions-setup-mysql@v1.17.0
+        with:
+          mysql-version: 'mariadb-10.9'
+      - name: MySQL info
+        run:  echo ${{ steps.setup-mysql.outputs.base-dir }}
       - name: checkout
         uses: actions/checkout@v3
       - name: configure
@@ -19,3 +25,4 @@ jobs:
         run: cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
       - name: sysbench version
         run: .\install_dir\bin\sysbench.exe --version
+     
