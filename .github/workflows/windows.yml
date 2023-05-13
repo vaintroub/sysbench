@@ -20,6 +20,8 @@ jobs:
             max_connections=500
             named-pipe=1
             socket=MySQL
+      - name: system info
+        run: PowerShell "Get-PhysicalDisk | Format-Table -AutoSize"
       - name: show variables
         run: mysql -uroot --host=. -e "show variables"
       - name: checkout
