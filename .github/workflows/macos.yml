@@ -20,6 +20,10 @@ jobs:
             max_connections=500
       - name: show variables
         run: mysql -uroot --host=127.0.0.1 -e "show variables"
+      - name: install client drivers
+        run : |
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq
+          brew link --force mysql-client libpq
       - name: checkout
         uses: actions/checkout@v3
       - name: configure
