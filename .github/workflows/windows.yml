@@ -1,0 +1,21 @@
+name: Windows
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest]
+    runs-on: ${{ matrix.os }}
+    name: Build on ${{ matrix.os }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: configure
+        run: cmake -B build_dir -S .
+      - name: build
+        run: cmake --build build_dir --config RelWithDebInfo
+      - name: test_install
+        run: cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
+      - name: sysbench version
+        run: .\install_dir\bin\sysbench.exe --version
