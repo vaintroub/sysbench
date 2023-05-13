@@ -13,17 +13,23 @@ jobs:
         uses: shogo82148/actions-setup-mysql@v1.17.0
         with:
           mysql-version: 'mariadb-10.9'
-      - name: MySQL info
-        run:  echo "${{ steps.setup-mysql.outputs.base-dir }}"
       - name: checkout
         uses: actions/checkout@v3
       - name: configure
         run: cmake -B build_dir -S .
       - name: build
-        run: cmake --build build_dir --config RelWithDebInfo
+        run: cmake --build build_dir --config RelWithDebInfo -j4
       - name: test_install
         run: cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
       - name: sysbench version
         run: .\install_dir\bin\sysbench.exe --version
       - name: create database sbtest
         run: mysql -uroot -e "create database sbtest"
+      - name: sysbench oltp_read_write prepare
+        run: .\install_dir\bin\sysbench.exe oltp_read_write --mysql-user=root --table-size=100000 prepare
+      - name: sysbench oltp_read_write run
+        run: .\install_dir\bin\sysbench.exe oltp_read_write --mysql-user=root --table-size=100000 --threads=4  --report-interval=1 run
+      - name: sysbench oltp_read_write run ssl
+        run: .\install_dir\bin\sysbench.exe oltp_read_write --mysql-user=root --mysql-ssl=on --table-size=100000 --threads=4  --report-interval=1 run
+      - name: sysbench oltp_read_write cleanup
+        run: .\install_dir\bin\sysbench.exe oltp_read_write --mysql-user=root cleanup
