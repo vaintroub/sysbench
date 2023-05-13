@@ -34,8 +34,7 @@ jobs:
         run: cmake --install build_dir --prefix install_dir --config RelWithDebInfo
       - name: set PATH
         run: |
-          export PATH=$PWD/install_dir/bin:$PATH
-          echo $PWD
+          echo "$GITHUB_WORKSPACE/install_dir/bin >> $GITHUB_PATH
       - name: which sysbench
         run: which sysbench
       - name: sysbench version
