@@ -20,7 +20,7 @@ jobs:
             max_connections=500
             named-pipe=1
       - name: show variables
-        run: mysql -uroot -e "show variables"
+        run: mysql -uroot --host=. -e "show variables"
       - name: checkout
         uses: actions/checkout@v3
       - name: configure
