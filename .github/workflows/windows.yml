@@ -19,6 +19,7 @@ jobs:
             max_allowed_packet=16MB
             max_connections=500
             named-pipe=1
+            socket=MySQL
       - name: show variables
         run: mysql -uroot --host=. -e "show variables"
       - name: checkout
