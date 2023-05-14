@@ -21,7 +21,7 @@ jobs:
             named-pipe=1
             socket=MySQL
       - name: actions-setup-mysql
-      - uses: ikalnytskyi/action-setup-postgres@v4
+        uses: ikalnytskyi/action-setup-postgres@v4
         with:
           username: sbtest
           database: sbtest
