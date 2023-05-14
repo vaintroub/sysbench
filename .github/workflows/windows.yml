@@ -20,6 +20,11 @@ jobs:
             max_connections=500
             named-pipe=1
             socket=MySQL
+      - name: actions-setup-mysql
+      - uses: ikalnytskyi/action-setup-postgres@v4
+        with:
+          username: sbtest
+          database: sbtest
       - name: system info
         run: |
           PowerShell "Get-PhysicalDisk | Format-Table -AutoSize"
@@ -34,16 +39,18 @@ jobs:
       - name: build
         run: cmake --build build_dir --config RelWithDebInfo -j4
       - name: test_install
-        run: cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
+        run: |
+          cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
+          echo ".\install_dir\bin" >> $GITHUB_PATH
       - name: sysbench version
-        run: .\install_dir\bin\sysbench.exe --version
+        run: sysbench --version
       - name: create database sbtest
         run: mysql -uroot -e "create database sbtest"
       - name: sysbench oltp_read_write prepare
-        run: .\install_dir\bin\sysbench.exe oltp_read_write --mysql-user=root --table-size=100000 prepare
+        run: sysbench oltp_read_write --mysql-user=root --table-size=100000 prepare
       - name: sysbench oltp_point_select run
-        run: .\install_dir\bin\sysbench.exe oltp_point_select --mysql-user=root --mysql-host=. --time=30 --table-size=100000 --threads=4  --report-interval=1 run
+        run: sysbench oltp_point_select --mysql-user=root --mysql-host=. --time=30 --table-size=100000 --threads=4  --report-interval=1 run
       - name: sysbench oltp_read_write run ssl
-        run: .\install_dir\bin\sysbench.exe oltp_read_write --mysql-user=root --time=30 --mysql-ssl=on --table-size=100000 --threads=4  --report-interval=1 run
+        run: sysbench oltp_read_write --mysql-user=root --time=30 --mysql-ssl=on --table-size=100000 --threads=4  --report-interval=1 run
       - name: sysbench oltp_read_write cleanup
-        run: .\install_dir\bin\sysbench.exe oltp_read_write --mysql-user=root cleanup
+        run: sysbench.exe oltp_read_write --mysql-user=root cleanup
