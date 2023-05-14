@@ -47,10 +47,10 @@ jobs:
       - name: create database sbtest
         run: mysql -uroot -e "create database sbtest"
       - name: sysbench oltp_read_write prepare
-        run: sysbench oltp_read_write --mysql-user=root --table-size=100000 prepare
+        run: sysbench.exe oltp_read_write --mysql-user=root --table-size=100000 prepare
       - name: sysbench oltp_point_select run
-        run: sysbench oltp_point_select --mysql-user=root --mysql-host=. --time=30 --table-size=100000 --threads=4  --report-interval=1 run
+        run: sysbench.exe oltp_point_select --mysql-user=root --mysql-host=. --time=30 --table-size=100000 --threads=4  --report-interval=1 run
       - name: sysbench oltp_read_write run ssl
-        run: sysbench oltp_read_write --mysql-user=root --time=30 --mysql-ssl=on --table-size=100000 --threads=4  --report-interval=1 run
+        run: sysbench.exe oltp_read_write --mysql-user=root --time=30 --mysql-ssl=on --table-size=100000 --threads=4  --report-interval=1 run
       - name: sysbench oltp_read_write cleanup
         run: sysbench.exe oltp_read_write --mysql-user=root cleanup
