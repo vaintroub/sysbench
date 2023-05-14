@@ -246,7 +246,12 @@ if(WIN32)
   POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:luajit::libluajit> $<TARGET_FILE_DIR:sysbench>
   COMMENT "Copy luajit dll"
-)
+ )
+ add_custom_command(TARGET sysbench
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:mariadbclient> $<TARGET_FILE_DIR:sysbench>
+  COMMENT "Copy libmariadb dll"
+ )
 endif()
 
 # Find git hash, if built from git
