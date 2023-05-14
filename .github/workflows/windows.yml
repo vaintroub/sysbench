@@ -41,8 +41,8 @@ jobs:
           cat $env:GITHUB_PATH
       - name: sysbench version
         run: sysbench --version
-      - name: sysbench --help
-        run: sysbench help
+      - name: sysbench help
+        run: sysbench --help
       - name: create database sbtest
         run: mysql -uroot -e "create database sbtest"
       - name: sysbench oltp_read_write prepare
