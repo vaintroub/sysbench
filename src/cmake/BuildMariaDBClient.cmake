@@ -6,7 +6,7 @@
 # libs
 include(ExternalProject)
 if(WIN32)
-  set(mariadbclient_LIBRARY_NAME mariadbclient.lib)
+  set(mariadbclient_LIBRARY_NAME libmariadb.dll)
 else()
   set(mariadbclient_LIBRARY_NAME libmariadbclient.a)
 endif()
@@ -15,6 +15,8 @@ set(mariadbclient_IMPORTED_LOCATION
   ${CMAKE_CURRENT_BINARY_DIR}/libmariadb-install/lib/mariadb/${mariadbclient_LIBRARY_NAME})
 if(WIN32)
   set(STATIC_PVIO_NPIPE -DCLIENT_PLUGIN_PVIO_NPIPE=STATIC)
+  set(mariadbclient_IMPORTED_IMPLIB
+    ${CMAKE_CURRENT_BINARY_DIR}/libmariadb-install/lib/mariadb/libmariadb.lib)
 endif()
 include(ProcessorCount)
 ProcessorCount(N)
@@ -44,20 +46,23 @@ ExternalProject_Add(
   BUILD_BYPRODUCTS ${mariadbclient_IMPORTED_LOCATION}
 )
 make_directory(${CMAKE_CURRENT_BINARY_DIR}/libmariadb-install/include/mariadb)
-add_library(mariadbclient STATIC IMPORTED GLOBAL)
-add_dependencies(mariadbclient buildLibmariadb)
 if(WIN32)
-  set(mariadbclient_INTERFACE_LINK_LIBRARIES "ws2_32;crypt32;secur32;shlwapi;bcrypt")
+  add_library(mariadbclient SHARED IMPORTED GLOBAL)
+  set_target_properties(mariadbclient PROPERTIES
+    IMPORTED_LOCATION ${mariadbclient_IMPORTED_LOCATION}
+    IMPORTED_IMPLIB ${mariadbclient_IMPORTED_IMPLIB}
+    INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}/libmariadb-install/include/mariadb
+    INTERFACE_LINK_LIBRARIES "${mariadbclient_INTERFACE_LINK_LIBRARIES}")
 else()
   find_package(OpenSSL)
   if (NOT OpenSSL_FOUND)
     message(FATAL_ERROR "Could not find OpenSSL, which is required to build libmariadb from source")
   endif()
+  add_library(mariadbclient STATIC IMPORTED GLOBAL)
   set(mariadbclient_INTERFACE_LINK_LIBRARIES "m;dl;OpenSSL::SSL")
-endif()
-
-set_target_properties(mariadbclient PROPERTIES
+  set_target_properties(mariadbclient PROPERTIES
   IMPORTED_LOCATION ${mariadbclient_IMPORTED_LOCATION}
   INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}/libmariadb-install/include/mariadb
-  INTERFACE_LINK_LIBRARIES "${mariadbclient_INTERFACE_LINK_LIBRARIES}"
-)
+  INTERFACE_LINK_LIBRARIES "${mariadbclient_INTERFACE_LINK_LIBRARIES}")
+endif()
+add_dependencies(mariadbclient buildLibmariadb)
