@@ -41,8 +41,8 @@ jobs:
       - name: test_install
         run: |
           cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
-          # echo "${GITHUB_WORKSPACE}\install_dir\bin" >> $GITHUB_PATH
-          echo "${GITHUB_WORKSPACE}\install_dir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$pwd\install_dir\bin"
+          echo "$pwd\install_dir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           echo $env:GITHUB_PATH
       - name: sysbench version
         run: sysbench --version
