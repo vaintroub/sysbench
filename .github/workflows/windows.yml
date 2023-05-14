@@ -57,8 +57,8 @@ jobs:
       - name: sysbench pgsql oltp_read_write prepare
         run: sysbench oltp_read_write --db-driver=pgsql --pgsql-password=sbtest --table-size=100000 prepare
       - name: sysbench pgsql oltp_point_select run
-        run: sysbench oltp_point_select  --db-driver=pgsql --pgsql-password=sbtest --time=30 --table-size=100000 --threads=1  --report-interval=1 run
+        run: sysbench oltp_point_select --db-driver=pgsql --pgsql-password=sbtest --time=30 --table-size=100000 --threads=4  --report-interval=1 run
       - name: sysbench pgsql oltp_read_write run
-        run: sysbench oltp_read_write --db-driver=pgsql --pgsql-password=sbtest --time=30 --table-size=100000 --threads=1  --report-interval=1 run
+        run: sysbench oltp_read_write --db-driver=pgsql --pgsql-password=sbtest --time=30 --table-size=100000 --threads=4  --report-interval=1 run
       - name: sysbench oltp_read_write cleanup
         run: sysbench oltp_read_write --db-driver=pgsql --pgsql-password=sbtest cleanup
