@@ -40,7 +40,12 @@ jobs:
       - name: configure
         run: cmake -B build_dir -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-release        
       - name: build
-        run: cmake --build build_dir --config RelWithDebInfo -j 4
+        run: cmake --build build_dir --config RelWithDebInfo --target package -j 4
+      - name: upload package
+        uses: actions/upload-artifact@v3
+        with:
+          name: package
+          path: build_dir/*.zip
       - name: test_install
         run: |
           cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
