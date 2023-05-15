@@ -9,14 +9,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Build on ${{ matrix.os }}
     steps:
-      - name: vcpkg build
-        uses: johnwason/vcpkg-action@v4
-        id: vcpkg
-        with:
-          pkgs: libpq
-          triplet: x64-windows-release
-          token: ${{ github.token }}
-     
       - name: actions-setup-mysql
         uses: shogo82148/actions-setup-mysql@v1.17.0
         with:
@@ -38,8 +30,13 @@ jobs:
         run: mysql -uroot --host=. -e "show variables"
       - name: checkout
         uses: actions/checkout@v3
-      - name: configure
-        run: cmake  -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_MANIFEST_MODE=OFF -S . -B build_dir
+      - name: Run CMake with manifest mode vcpkg
+      - uses: friendlyanon/setup-vcpkg@v1
+        with:
+          committish: 501db0f
+        run: cmake -B build -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+      #- name: configure
+      #-  run: cmake  -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_MANIFEST_MODE=OFF -S . -B build_dir
       - name: build
         run: cmake --build build_dir -j 4
       - name: test_install
