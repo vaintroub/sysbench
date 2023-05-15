@@ -32,12 +32,8 @@ jobs:
         uses: actions/checkout@v3
       - name: setup vcpkg
       - uses: friendlyanon/setup-vcpkg@v1
-        with:
-          committish: 501db0f
-      - name: CMake with manifest mode vcpkg
-        run: cmake -B build -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
-      #- name: configure
-      #-  run: cmake  -DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-release -DVCPKG_MANIFEST_MODE=OFF -S . -B build_dir
+        with: { committish: 934a99dc13cabb330824ae1a5ab4a53a9acc5a49 }
+      - run: cmake -B build_dir -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
       - name: build
         run: cmake --build build_dir -j 4
       - name: test_install
