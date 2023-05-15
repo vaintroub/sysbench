@@ -10,9 +10,7 @@ jobs:
     name: Build on ${{ matrix.os }}
     steps:
       - name: vcpkg install libpq
-        run: |
-          where vcpkg.exe
-          vcpkg install libpq:x64-windows
+        run: vcpkg install libpq:x64-windows
       - name: actions-setup-mysql
         uses: shogo82148/actions-setup-mysql@v1.17.0
         with:
