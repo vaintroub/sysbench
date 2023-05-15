@@ -107,7 +107,32 @@ static unsigned int alarm(unsigned int seconds)
 }
 #define signal(x, y) do {alarm_func = y;} while(0);
 
+static void timeEndPeriod_atexit(void)
+{
+  timeEndPeriod(1);
+}
+
+/*
+  On Windows 11, disallow throttling CPU and power when window
+  with sysbench is overlapped by another window.
+  Also, make sleep timers more exact.
+*/
+static void prevent_process_throttling()
+{
+  PROCESS_POWER_THROTTLING_STATE PowerThrottling;
+  RtlZeroMemory(&PowerThrottling, sizeof(PowerThrottling));
+
+  PowerThrottling.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+  PowerThrottling.ControlMask =
+    PROCESS_POWER_THROTTLING_EXECUTION_SPEED|PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+  PowerThrottling.StateMask = 0;
+
+  SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &PowerThrottling, sizeof(PowerThrottling));
+  timeBeginPeriod(1);
+  atexit(timeEndPeriod_atexit);
+}
 #else
+#define prevent_process_throttling() do {} while(0)
 #include "ck_cc.h"
 #include "ck_ring.h"
 #endif
@@ -1476,6 +1501,8 @@ int main(int argc, char *argv[])
 {
   sb_test_t *test = NULL;
   int rc;
+
+  prevent_process_throttling();
 
   sb_globals.argc = argc;
   sb_globals.argv = malloc(argc * sizeof(char *));
