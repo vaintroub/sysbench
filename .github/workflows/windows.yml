@@ -30,8 +30,15 @@ jobs:
         run: mysql -uroot --host=. -e "show variables"
       - name: checkout
         uses: actions/checkout@v3
+        
+      - uses: actions/cache@v3
+        id: vcpkg_cache
+        with:
+          path: ~\AppData\Local\vcpkg
+          key: ${{ runner.os }}-${{ hashFiles('**/vcpkg.json') }}
+
       - name: configure
-        run: cmake -B build_dir -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-release
+        run: cmake -B build_dir -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-release        
       - name: build
         run: cmake --build build_dir --config RelWithDebInfo -j 4
       - name: test_install
