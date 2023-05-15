@@ -124,7 +124,10 @@ static void prevent_process_throttling()
 
   PowerThrottling.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
   PowerThrottling.ControlMask =
-    PROCESS_POWER_THROTTLING_EXECUTION_SPEED|PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+    PROCESS_POWER_THROTTLING_EXECUTION_SPEED;
+#ifdef PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION
+  PowerThrottling.ControlMask |= PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+#endif
   PowerThrottling.StateMask = 0;
 
   SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &PowerThrottling, sizeof(PowerThrottling));
