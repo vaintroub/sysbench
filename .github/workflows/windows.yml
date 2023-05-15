@@ -30,10 +30,8 @@ jobs:
         run: mysql -uroot --host=. -e "show variables"
       - name: checkout
         uses: actions/checkout@v3
-      - name: setup vcpkg
-      - uses: friendlyanon/setup-vcpkg@v1
-        with: { committish: 934a99dc13cabb330824ae1a5ab4a53a9acc5a49 }
-      - run: cmake -B build_dir -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+      - name: configure
+        run: cmake -B build_dir -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
       - name: build
         run: cmake --build build_dir -j 4
       - name: test_install
