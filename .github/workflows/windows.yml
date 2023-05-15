@@ -39,9 +39,9 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       - name: configure
-        run: cmake -B build_dir -S .
-      - name: build
         run: cmake ${{ steps.vcpkg.outputs.vcpkg-cmake-config }} -S . -B build_dir
+      - name: build
+        run: cmake --build build_dir -j 4
       - name: test_install
         run: |
           cmake --install build_dir --prefix install_dir  --config RelWithDebInfo
