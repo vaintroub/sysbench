@@ -185,6 +185,14 @@ Assuming you have Xcode (or Xcode Command Line Tools) and Homebrew installed:
     make install
 ```
 
+## Build and Install using CMake
+``` shell
+    # Add -DWITH_PGSQL=1 to build with PostgreSQL support
+    cmake .
+    cmake --build .
+    cmake --install .
+```
+
 The above will build sysbench with MySQL support by default. If you have
 MySQL headers and libraries in non-standard locations (and no
 `mysql_config` can be found in the `PATH`), you can specify them
