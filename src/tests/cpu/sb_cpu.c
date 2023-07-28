@@ -94,6 +94,14 @@ sb_event_t cpu_next_event(int thread_id)
   return req;
 }
 
+#if defined _MSC_VER && !defined __clang__
+/*
+  MSVC would optimize away the whole function
+  if optimizations are on.
+*/
+#pragma optimize("g", off)
+#endif
+
 int cpu_execute_event(sb_event_t *r, int thread_id)
 {
   unsigned long long c;
@@ -118,6 +126,10 @@ int cpu_execute_event(sb_event_t *r, int thread_id)
 
   return 0;
 }
+
+#if defined _MSC_VER && !defined __clang__
+#pragma optimize("", on)
+#endif
 
 void cpu_print_mode(void)
 {
