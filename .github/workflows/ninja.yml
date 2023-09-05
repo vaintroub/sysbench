@@ -1,0 +1,74 @@
+name: ninja
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest,ubuntu-latest]
+        mysql-distribution: [mysql, mariadb]
+    runs-on: ${{ matrix.os }}
+    name: Test with ${{ matrix.mysql-distribution }} on ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: seanmiddleditch/gha-setup-ninja@master
+      - name: configure
+        run: cmake . -GNinja
+      - name: Build
+        run: cmake --build .
+      - name: test_install
+        run: |
+          cmake --install . --prefix install_dir
+      - name: update environment (Windows only)
+        if: contains(matrix.os, 'windows')
+        run: |
+          echo "$pwd\install_dir\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          cat $env:GITHUB_PATH
+      - name: update environment (non-Windows)
+        if: contains(matrix.os, 'ubuntu')
+        run: |
+            echo "$PWD/install_dir/bin" >> $GITHUB_PATH
+            cat $GITHUB_PATH
+      - name: setup-server
+        uses: shogo82148/actions-setup-mysql@v1
+        env:
+          TMPDIR: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+          TEMP: ${{ runner.temp }}
+        with:
+          distribution: ${{ matrix.mysql-distribution }}
+          my-cnf: |
+            ${{ matrix.mysql-distribution == 'mysql' && 'innodb_redo_log_capacity' || 'innodb_log_file_size' }}=4G
+            innodb_buffer_pool_size=512MB
+            max_allowed_packet=16MB
+            skip-log-bin
+            loose-enable-named-pipe
+            socket=/tmp/mysql.sock
+            max_connections=1000
+      - name: create database sbtest
+        run: mysql -uroot -e "create database sbtest"
+      - name: sysbench oltp_read_write prepare
+        run: sysbench oltp_read_write --mysql-user=root --mysql-host=127.0.0.1 --mysql-port=3306 --table-size=100000  prepare
+      - name: sysbench oltp_point_select run
+        run: sysbench oltp_point_select --mysql-user=root --mysql-socket=/tmp/mysql.sock --time=30 --table-size=100000 --threads=4  --report-interval=1 --histogram run
+      - name: sysbench oltp_update_index run single thread  innodb_flush_log_at_trx_commit=1
+        run: |
+            mysql -uroot -e "set global innodb_flush_log_at_trx_commit=1"
+            sysbench oltp_update_index --mysql-user=root --mysql-socket=/tmp/mysql.sock --time=60 --table-size=100000 --threads=1  --report-interval=1 --histogram run
+      - name: sysbench oltp_update_index run single thread  innodb_flush_log_at_trx_commit=2
+        run: |
+            mysql -uroot -e "set global innodb_flush_log_at_trx_commit=2"
+            sysbench oltp_update_index --mysql-user=root --mysql-socket=/tmp/mysql.sock --time=60 --table-size=100000 --threads=1  --report-interval=1 --histogram run
+            mysql -uroot -e "set global innodb_flush_log_at_trx_commit=1"
+      - name: sysbench oltp_update_index run 40 threads
+        run: sysbench oltp_update_index --mysql-user=root --mysql-socket=/tmp/mysql.sock --time=60  --table-size=100000 --threads=40  --report-interval=1 --histogram run
+      - name: sysbench oltp cleanup
+        run: sysbench oltp_read_write --mysql-host=127.0.0.1 --mysql-port=3306 --mysql-user=root cleanup
+      - name: fileio seqrewr prepare
+        run: sysbench fileio --file-block-size=4096  --file-test-mode=seqrewr  --file-num=1 prepare
+      - name: fileio seqrewr run fdatasync
+        run: sysbench fileio --file-block-size=4096  --file-test-mode=seqrewr --file-fsync-mode=fdatasync --file-fsync-all=on --file-num=1 --report-interval=1 --time=60 --histogram run
+      - name: fileio seqrewr run fsync
+        run: sysbench fileio --file-block-size=4096  --file-test-mode=seqrewr --file-fsync-mode=fsync --file-fsync-all=on --file-num=1 --report-interval=1 --time=60 --histogram run
+
