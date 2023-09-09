@@ -18,6 +18,10 @@ if(NOT WIN32)
   if(CMAKE_OSX_DEPLOYMENT_TARGET)
     set(MACOSX_DEPLOYMENT_TARGET
         "MACOSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  elseif(APPLE)
+    message(WARNING "CMAKE_OSX_DEPLOYMENT_TARGET was not set")
+    set(MACOSX_DEPLOYMENT_TARGET
+        "MACOSX_DEPLOYMENT_TARGET=12.6")
   endif()
   set(libluajit_static_lib ${install_dir}/lib/libluajit-5.1.a)
   ExternalProject_Add(
