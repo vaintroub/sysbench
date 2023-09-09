@@ -31,6 +31,7 @@ jobs:
         run : |
           HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq ninja
           brew link --force mysql-client
+          brew link --force --overwrite libpq
 
       - name: install build prerequisites (Windows)
         if: runner.os == 'Windows'
@@ -49,6 +50,18 @@ jobs:
 
       - name: build package
         run: cmake --build . --config Release --target package -j
+
+      - name: test_install
+        run: |
+          cmake --install . --config Release --prefix install_dir
+
+      - name: Archive build
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-${{ inputs.os }}
+          retention-days: 1
+          path: |
+            install_dir
 
       - name: setup mysql for unit tests
         if: runner.os != 'Windows'
@@ -72,17 +85,6 @@ jobs:
           name: ${{ inputs.os }}-package
           path: ./*.zip
 
-      - name: test_install
-        run: |
-          cmake --install . --config Release --prefix install_dir
-
-      - name: Archive build
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-${{ inputs.os }}
-          retention-days: 1
-          path: |
-            install_dir
 
   # Tests Ninja generator, non-standard compiler (clang on Linux and gcc on Windows and macOS)
   build-ninja:
@@ -97,6 +99,7 @@ jobs:
         run : |
           HOMEBREW_NO_AUTO_UPDATE=1 brew install ninja mysql-client libpq
           brew link --force mysql-client
+          brew link --force --overwrite libpq
 
       - name: install ninja (Linux)
         if: runner.os == 'Linux'
@@ -209,6 +212,7 @@ jobs:
         run : |
           HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq
           brew link --force mysql-client
+          brew link --force --overwrite libpq
 
       - name: update environment (Windows)
         if: runner.os == 'Windows'
