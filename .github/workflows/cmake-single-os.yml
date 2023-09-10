@@ -99,7 +99,7 @@ jobs:
         run : |
           HOMEBREW_NO_AUTO_UPDATE=1 brew install ninja mysql-client libpq
           brew link --force mysql-client
-          #brew link --force --overwrite libpq
+          brew link --force --overwrite libpq
 
       - name: install ninja (Linux)
         if: runner.os == 'Linux'
@@ -210,7 +210,7 @@ jobs:
       - name: install client drivers (macOS)
         if: runner.os == 'macOS'
         run : |
-          HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client
           brew link --force mysql-client
           # brew link --force --overwrite libpq
 
