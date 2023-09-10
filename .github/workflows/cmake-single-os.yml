@@ -29,19 +29,14 @@ jobs:
       - name: install build preprequisites (macOS)
         if: runner.os == 'macOS'
         run : |
-          HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq ninja
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq
           brew link --force mysql-client
-          #brew link --force --overwrite libpq
+          brew link --force --overwrite libpq
 
       - name: install build prerequisites (Windows)
         if: runner.os == 'Windows'
         run: |
           vcpkg install libpq zlib --triplet=x64-windows-release
-
-      - name: install build prerequisites (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install ninja-build
 
       - name: configure
         env:
