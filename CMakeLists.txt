@@ -8,7 +8,7 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 if(APPLE)
   # Add homebrew search paths on Mac
-  foreach(pkg openssl mysql-client mariadb-connector-c libpq)
+  foreach(pkg openssl mysql-client mariadb-connector-c)
     set(pkgpath /usr/local/opt/${pkg})
     if(EXISTS ${pkgpath})
       message(STATUS "Adding /usr/local/opt/${pkg} to CMAKE_PREFIX_PATH")
