@@ -205,9 +205,8 @@ jobs:
       - name: install client drivers (macOS)
         if: runner.os == 'macOS' 
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=1 brew install  ${{matrix.db == 'postgres' && 'postgresql@14' || 'mysql-client'}}
-          brew link --force mysql-client || 0
-          
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client ${{matrix.db == 'postgres' && 'postgresql@14' || ' '}}
+          brew link --force mysql-client
           # brew link --force --overwrite libpq
 
       - name: update environment (Windows)
