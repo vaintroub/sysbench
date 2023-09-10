@@ -203,8 +203,9 @@ jobs:
           chmod +x bin/sysbench
 
       - name: install client drivers (macOS)
-        run : |
-          HOMEBREW_NO_AUTO_UPDATE=1 brew install  ${{matrix.db == 'postgres' && 'postgres' || 'mysql-client'}}
+        if: runner.os == 'macOS' 
+        run: |
+          HOMEBREW_NO_AUTO_UPDATE=1 brew install  ${{matrix.db == 'postgres' && 'postgres@14' || 'mysql-client'}}
           brew link --force mysql-client || 0
           
           # brew link --force --overwrite libpq
