@@ -46,7 +46,7 @@ jobs:
       - name: configure
         env:
           CMAKE_VCPKG_PARAMS: ${{ runner.os ==  'Windows' && '-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-release' || ' '  }}
-        run: cmake . -DWITH_PGSQL=1 -DCMAKE_COMPILE_WARNING_AS_ERROR=1  ${{ env.CMAKE_VCPKG_PARAMS }}
+        run: cmake . -DWITH_PGSQL=1 -DCMAKE_COMPILE_WARNING_AS_ERROR=1 "-DPostgreSQL_ADDITIONAL_VERSIONS=15;15.4" ${{ env.CMAKE_VCPKG_PARAMS }}
 
       - name: build package
         run: cmake --build . --config Release --target package -j
