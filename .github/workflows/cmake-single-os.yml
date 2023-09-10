@@ -31,7 +31,7 @@ jobs:
         run : |
           HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq ninja
           brew link --force mysql-client
-          brew link --force --overwrite libpq
+          #brew link --force --overwrite libpq
 
       - name: install build prerequisites (Windows)
         if: runner.os == 'Windows'
@@ -99,7 +99,7 @@ jobs:
         run : |
           HOMEBREW_NO_AUTO_UPDATE=1 brew install ninja mysql-client libpq
           brew link --force mysql-client
-          brew link --force --overwrite libpq
+          #brew link --force --overwrite libpq
 
       - name: install ninja (Linux)
         if: runner.os == 'Linux'
@@ -212,7 +212,7 @@ jobs:
         run : |
           HOMEBREW_NO_AUTO_UPDATE=1 brew install mysql-client libpq
           brew link --force mysql-client
-          brew link --force --overwrite libpq
+          # brew link --force --overwrite libpq
 
       - name: update environment (Windows)
         if: runner.os == 'Windows'
