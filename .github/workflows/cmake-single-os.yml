@@ -249,6 +249,7 @@ jobs:
               socket=${{ runner.os == 'Windows' && 'mysql.sock' || '/tmp/mysql.sock' }}
               max_connections=1000
               innodb_max_dirty_pages_pct_lwm=10
+              innodb_flush_log_at_trx_commit=2
 
       - name: create database sbtest
         if: matrix.db != 'postgres'
