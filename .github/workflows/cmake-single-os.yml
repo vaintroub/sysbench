@@ -45,7 +45,8 @@ jobs:
       - name: configure
         env:
           CMAKE_VCPKG_PARAMS: ${{ runner.os ==  'Windows' && '-DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-release' || ' '  }}
-        run: cmake . -DWITH_PGSQL=1 -DCMAKE_COMPILE_WARNING_AS_ERROR=1  ${{ env.CMAKE_VCPKG_PARAMS }}
+          WITH_PGSQL: ${{ runner.os == 'macOS' && '0' || '1' }}
+        run: cmake . -DWITH_PGSQL=${{ env.WITH_PGSQL }} -DCMAKE_COMPILE_WARNING_AS_ERROR=1  ${{ env.CMAKE_VCPKG_PARAMS }}
 
       - name: build package
         run: cmake --build . --config Release --target package -j
@@ -127,8 +128,7 @@ jobs:
 
   test-asan:
     runs-on: ${{ inputs.os }}
-    # Linux is excluded, due to buggy ASAN ubuntu
-    if: ${{ !contains(inputs.os,'windows') }}
+    # if: ${{ !contains(inputs.os,'windows') }}
     name: test-asan
     continue-on-error: true
     steps:
@@ -186,7 +186,6 @@ jobs:
         db: [mariadb, mysql, postgres]
     needs: build
     runs-on: ${{ inputs.os }}
-    #if: contains(inputs.os,'windows')
     name: test-${{matrix.db}}
     env:
       COMMON_SYSBENCH_PARAMS: ${{ matrix.db == 'postgres' && '--db-driver=pgsql --pgsql-password=sbtest' || '--mysql-user=root'}}  --mysql-socket=${{ contains(inputs.os,'windows') && 'mysql.sock' || '/tmp/mysql.sock' }} --time=30 --table-size=1000000 --report-interval=1  --thread-init-timeout=300 --histogram
@@ -224,7 +223,7 @@ jobs:
             echo "LUA_PATH=$PWD/share/sysbench/?.lua" >> $GITHUB_ENV
 
       - name: actions-setup-pgsql
-        if: matrix.db =='postgres'
+        if:  ${{ matrix.db =='postgres' && runner.os != 'macOS' }}
         uses: ikalnytskyi/action-setup-postgres@v4
         with:
           username: sbtest
@@ -256,18 +255,25 @@ jobs:
           mysql -uroot --host=127.0.0.1 --port=3306 -e "create database sbtest"
 
       - name: oltp_read_write prepare
+        if: ${{ matrix.db != 'postgres' || runner.os != 'macOS' }}
         run: sysbench oltp_read_write ${{ env.COMMON_SYSBENCH_PARAMS }} prepare
       - name: oltp_point_select run
+        if: ${{ matrix.db != 'postgres' || runner.os != 'macOS' }}
         run: sysbench oltp_point_select ${{ env.COMMON_SYSBENCH_PARAMS }} --threads=20 run
       - name: oltp_read_write
+        if: ${{ matrix.db != 'postgres' || runner.os != 'macOS' }}
         run: sysbench oltp_read_write ${{ env.COMMON_SYSBENCH_PARAMS }} --threads=20 run
       - name: oltp_read_only
+        if: ${{ matrix.db != 'postgres' || runner.os != 'macOS' }}
         run: sysbench oltp_read_only ${{ env.COMMON_SYSBENCH_PARAMS }} --threads=20 run
       - name: oltp_update_index run (1 thread)
+        if: ${{ matrix.db != 'postgres' || runner.os != 'macOS' }}
         run: sysbench oltp_update_index ${{ env.COMMON_SYSBENCH_PARAMS }} --threads=1 run
       - name: oltp_update_index run (20 threads)
+        if: ${{ matrix.db != 'postgres' || runner.os != 'macOS' }}
         run: sysbench oltp_update_index ${{ env.COMMON_SYSBENCH_PARAMS }} --threads=20 run
       - name: oltp_read_write cleanup
+        if: ${{ matrix.db != 'postgres' || runner.os != 'macOS' }}
         run: sysbench oltp_update_index ${{ env.COMMON_SYSBENCH_PARAMS }} cleanup
 
 
