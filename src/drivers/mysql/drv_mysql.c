@@ -403,6 +403,10 @@ static int mysql_drv_real_connect(db_mysql_conn_t *db_mysql_con)
 #ifdef HAVE_MYSQL_OPT_SSL_MODE
   DEBUG("mysql_options(%p,%s,%d)", con, "MYSQL_OPT_SSL_MODE", args.ssl_mode);
   mysql_options(con, MYSQL_OPT_SSL_MODE, &args.ssl_mode);
+#else
+  char bool_no = 0;
+  mysql_options(con, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &bool_no);
+  mysql_options(con, MYSQL_OPT_SSL_ENFORCE, &bool_no);
 #endif
 
   if (args.use_ssl)
