@@ -18,6 +18,7 @@
   This file contains ports of various, mostly POSIX functions and macros
 */
 #pragma once
+#include <stdlib.h>
 
 #include <stdint.h>
 #include <time.h>
@@ -87,7 +88,12 @@ const char* sb_win_basename(const char* path);
 #define fstat _fstat64
 
 #define strcasecmp _stricmp
-#define random() rand()
+static inline int random()
+{
+  unsigned int ret = 0;
+  rand_s(&ret);
+  return (int)ret;
+}
 #define srandom(seed) srand(seed)
 #ifndef HAVE_CLOCK_GETTIME
 #define HAVE_CLOCK_GETTIME

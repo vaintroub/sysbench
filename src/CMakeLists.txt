@@ -57,6 +57,7 @@ if(WIN32)
   # Use pthreads port from Lockless.inc
   add_subdirectory(win/pthread)
   add_subdirectory(win)
+  target_compile_definitions(sysbench PRIVATE _CRT_RAND_S)
 else()
   set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
   set(THREADS_PREFER_PTHREAD_FLAG TRUE)
