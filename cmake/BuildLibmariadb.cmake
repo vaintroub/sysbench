@@ -41,7 +41,7 @@ list(APPEND  _EXTRA_CMAKE_ARGS
 ENDIF()
 
 set(LIBMARIADB_GIT_TAG
-    v3.4.2
+    v3.4.8
     CACHE
       STRING
       "Git tag of mariadb client library. Set to empty string to get most recent revision"
