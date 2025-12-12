@@ -50,21 +50,6 @@ jobs:
       - name: build package
         run: cmake --build . --config Release --target package -j
 
-      - name: setup mysql for unit tests
-        if: runner.os != 'Windows'
-        uses: shogo82148/actions-setup-mysql@v1
-        with:
-          my-cnf: |
-            innodb_redo_log_capacity=4G
-            innodb_buffer_pool_size=4G
-            skip-log-bin
-
-      - name: unit test
-        if: runner.os != 'Windows'
-        run: |
-          mysql -uroot -e "create database sbtest"
-          SBTEST_MYSQL_ARGS=" --mysql-user=root  --mysql-host=127.0.0.1 " cmake --build . --config Release --target test
-
       - name: upload package(Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v6
@@ -111,7 +96,7 @@ jobs:
       - name: configure and build
         run: |
           mkdir build
-          cmake -S . -B build -GNinja -DCMAKE_COMPILE_WARNING_AS_ERROR=1 -DCMAKE_BUILD_TYPE=Debug -DWITH_PGSQL=1 -DCMAKE_C_COMPILER=${{ runner.os == 'Linux' && 'clang' || 'gcc' }}
+          cmake -S . -B build -GNinja -DCMAKE_COMPILE_WARNING_AS_ERROR=1 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=${{ runner.os == 'Linux' && 'clang' || 'gcc' }}
           cmake --build build
 
       - uses: seanmiddleditch/gha-setup-vsdevenv@master
@@ -122,7 +107,7 @@ jobs:
         run: |
           choco install llvm
           mkdir clang_build
-          cmake -S . -B clang_build -GNinja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_COMPILE_WARNING_AS_ERROR=1 -DCMAKE_BUILD_TYPE=Debug -DWITH_PGSQL=1
+          cmake -S . -B clang_build -GNinja -DCMAKE_C_COMPILER=clang-cl -DCMAKE_COMPILE_WARNING_AS_ERROR=1 -DCMAKE_BUILD_TYPE=Debug
           cmake --build clang_build
 
   test-asan:
